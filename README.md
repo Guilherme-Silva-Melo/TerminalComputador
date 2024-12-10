@@ -13,3 +13,7 @@ python3 ./screen.py
 ```
 ## Problema
 Caso ocorre algum problema com o PyOpenGL, execute o programa sem o shader presente no arquivo "screen_no_shader.py" 
+
+## Telas 
+### COM SHADER
+![Print Com Shader](PrintSemShader.png)
