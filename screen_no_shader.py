@@ -35,8 +35,8 @@ def abrirVideo(video_path):
         # Redimensiona o frame para caber na tela do Pygame
         frame = cv2.resize(frame, (WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-        frame = cv2.flip(frame, -1)  # Inverte verticalmente
+        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        frame = cv2.flip(frame, 0)  # Inverte verticalmente
 
         # Converte o frame para uma superfície do Pygame
         frame_surface = pygame.surfarray.make_surface(frame)
