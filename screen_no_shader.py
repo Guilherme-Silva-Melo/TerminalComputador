@@ -35,8 +35,8 @@ def abrirVideo(video_path):
         # Redimensiona o frame para caber na tela do Pygame
         frame = cv2.resize(frame, (WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        frame = cv2.flip(frame, 0)
+        frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+        frame = cv2.flip(frame, -1)  # Inverte verticalmente
 
         # Converte o frame para uma superfície do Pygame
         frame_surface = pygame.surfarray.make_surface(frame)
@@ -67,13 +67,14 @@ def abrirVideo(video_path):
         # Limita o FPS para 30 (ajusta conforme necessário)
         clock.tick(30)
     player.close_player()
+
     video.release()
 
 # Dados do menu
 menu_items = ["ARQUIVOS", "CONFIDENCIAL", "VIDEOS", "UTILIDADE"]
 items = [
     ["20/01/1996 -> Varginha - MG", "19/05/1986 -> Rio de Janeiro - RJ"],
-    ["Abrir Video"],
+    [],
     ["Abrir Video"],
     ["LETRAS", "ALFABETOS", "TELEFONE"]
 ]
@@ -162,11 +163,7 @@ def main():
                 elif content_unlocked:
                     if event.key == pygame.K_RETURN:
                         content_unlocked = False  # Retornar ao menu principal
-
-        # Se o conteúdo foi desbloqueado, não exibe o menu
-        if content_unlocked:
-            content_unlocked = False
-
+                        
         # Desenhar o menu
         draw_menu()
 
@@ -175,6 +172,7 @@ def main():
         clock.tick(30)
 
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
