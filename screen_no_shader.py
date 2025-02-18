@@ -1,89 +1,56 @@
-import cv2
 import pygame
 import os
-from ffpyplayer.player import MediaPlayer
+from pyvidplayer2 import Video
 
 # Inicializa o Pygame
 pygame.init()
 
 # Configurações da tela
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1920, 1080
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 pygame.display.set_caption("Terminal Menu")
 
+# Função para abrir vídeos
 def abrirVideo(video_path):
-    # Verifica se o vídeo existe
-    if not os.path.exists(video_path):
-        print(f"Erro: O arquivo '{video_path}' não foi encontrado.")
-        return
-
-    # Configura o vídeo e o player de áudio
-    video = cv2.VideoCapture(video_path)
-    player = MediaPlayer(video_path)
-
+    vid = Video(video_path)
+    running = True
     clock = pygame.time.Clock()
 
-    while True:
-        # Lê o próximo frame do vídeo
-        grabbed, frame = video.read()
-        audio_frame, val = player.get_frame()
-
-        # Se o vídeo acabou, para a reprodução
-        if not grabbed:
-            break
-
-        # Redimensiona o frame para caber na tela do Pygame
-        frame = cv2.resize(frame, (WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        frame = cv2.flip(frame, 0)  # Inverte verticalmente
-
-        # Converte o frame para uma superfície do Pygame
-        frame_surface = pygame.surfarray.make_surface(frame)
-
-        # Renderiza o frame no Pygame
-        screen.blit(frame_surface, (0, 0))
-        pygame.display.flip()
-
-        # Reproduz o áudio se disponível
-        if val != 'eof' and audio_frame is not None:
-            img, t = audio_frame
-
-        # Sincroniza o áudio com o vídeo usando o tempo de cada frame
-        pygame.time.delay(int(1000 / 30))  # Ajuste para 30 FPS, caso necessário
-
-        # Gerencia eventos para fechar o vídeo
+    while running:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                video.release()
-                player.close_player()
-                pygame.quit()
-                return
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                video.release()
-                player.close_player()
-                return
+            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                running = False  # Sai do loop e retorna ao menu
 
-        # Limita o FPS para 30 (ajusta conforme necessário)
-        clock.tick(30)
-    player.close_player()
+        screen.fill((0, 0, 0))  # Fundo preto
+        
+        if vid.active:
+            vid.draw(screen, (0, 0), force_draw=True)
+            pygame.display.update()
+        else:
+            running = False  # Fecha o vídeo quando termina
 
-    video.release()
+        clock.tick(24)
+
+    vid.close()
+
+    # Voltar para o menu
+    screen.fill((0, 0, 0))
+    draw_menu()
+    pygame.display.flip()
 
 # Dados do menu
-menu_items = ["ARQUIVOS", "CONFIDENCIAL", "VIDEOS", "UTILIDADE"]
-items = [
-    ["20/01/1996 -> Varginha - MG", "19/05/1986 -> Rio de Janeiro - RJ"],
-    [],
-    ["Abrir Video"],
-    ["LETRAS", "ALFABETOS", "TELEFONE"]
-]
+menu_items = {
+    "ARQUIVOS": ["20/01/1996 -> Varginha - MG", "19/05/1986 -> Rio de Janeiro - RJ"], 
+    "CONFIDENCIAL": [], 
+    "VIDEOS": ["Abrir Video"], 
+    "UTILIDADE": ["LETRAS", "ALFABETOS", "TELEFONE"]
+}
+
 selected_item = 0
 password = "1234"
 content_unlocked = False
 show_password_prompt = False
 input_text = ""
-
 
 # Função para desenhar o menu
 def draw_menu():
@@ -98,7 +65,8 @@ def draw_menu():
     screen.blit(title_text, (20, 20))
 
     # Renderizar os itens do menu lateral
-    for i, item in enumerate(menu_items):
+    menu_keys = list(menu_items.keys())
+    for i, item in enumerate(menu_keys):
         color = (0, 255, 0) if i == selected_item else (0, 128, 0)
         item_text = font.render(item, True, color)
         screen.blit(item_text, (20, 100 + i * 40))
@@ -108,7 +76,7 @@ def draw_menu():
 
     # Mostrar conteúdo ou solicitar senha
     if content_unlocked:
-        category_items = items[selected_item]
+        category_items = menu_items[menu_keys[selected_item]]
         for j, content in enumerate(category_items):
             content_text = font.render(content, True, (144, 238, 144))
             screen.blit(content_text, (220, 120 + j * 40))
@@ -117,7 +85,6 @@ def draw_menu():
         screen.blit(prompt_text, (220, 120))
         password_text = font.render(input_text, True, (144, 238, 144))
         screen.blit(password_text, (220, 160))
-
 
 # Loop principal
 def main():
@@ -138,10 +105,12 @@ def main():
                     elif event.key == pygame.K_DOWN:
                         selected_item = (selected_item + 1) % len(menu_items)
                     elif event.key == pygame.K_RETURN:
-                        if menu_items[selected_item] == "CONFIDENCIAL":  # Verifica se é CONFIDENCIAL
+                        selected_category = list(menu_items.keys())[selected_item]
+
+                        if selected_category == "CONFIDENCIAL":
                             show_password_prompt = True
                             input_text = ""
-                        elif menu_items[selected_item] == "VIDEOS":
+                        elif selected_category == "VIDEOS":
                             abrirVideo('videoMorse.mp4')  # Abre o vídeo
                         else:
                             content_unlocked = True  # Caso contrário, desbloqueia diretamente o conteúdo
@@ -152,18 +121,13 @@ def main():
                     elif event.key == pygame.K_RETURN:
                         if input_text == password:
                             content_unlocked = True
-                            abrirVideo('youveBeen.mp4')  # Abre o vídeo
                             show_password_prompt = False
+                            abrirVideo('youveBeen.mp4')  # Abre o vídeo
                         else:
-                            # Senha incorreta, limpa o campo de senha e permite nova tentativa
-                            input_text = ""
-                            show_password_prompt = True  # Permite que o usuário tente novamente
+                            input_text = ""  # Senha incorreta, limpa o campo de senha
                     elif event.unicode.isprintable():
                         input_text += event.unicode
-                elif content_unlocked:
-                    if event.key == pygame.K_RETURN:
-                        content_unlocked = False  # Retornar ao menu principal
-                        
+
         # Desenhar o menu
         draw_menu()
 
@@ -172,7 +136,6 @@ def main():
         clock.tick(30)
 
     pygame.quit()
-
 
 if __name__ == "__main__":
     main()
